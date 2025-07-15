@@ -82,7 +82,7 @@ async function chatAgent(): Promise<void> {
         });
         content = response.choices[0].message?.content ?? "";
       } catch (error) {
-        content = `Error ejecutando tool: ${error instanceof Error ? error.message : error}`;
+        content = `Error executing tool: ${error instanceof Error ? error.message : error}`;
       }
     }
     history.push({ role: "assistant", content });
@@ -93,7 +93,7 @@ async function chatAgent(): Promise<void> {
 
 async function main(): Promise<void> {
   try {
-    console.log('Agente listo. Escribe el nombre de una tool o "exit" para salir.');
+    console.log('Agent ready. Type a tool name or "exit" to exit.');
     await chatAgent();
   } catch (error) {
     console.error(
