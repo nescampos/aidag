@@ -1,4 +1,4 @@
-# BlockDAG AI Agent
+# BlockDAG AI Agent - AIDAG
 
 A modular AI agent for the BlockDAG blockchain, capable of interacting via CLI, executing blockchain operations, and supporting tool-calls through natural language using OpenAI-compatible models.
 
