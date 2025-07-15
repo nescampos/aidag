@@ -3,7 +3,7 @@
 A modular AI agent for the BlockDAG blockchain, capable of interacting via CLI, executing blockchain operations, and supporting tool-calls through natural language using OpenAI-compatible models.
 
 ## Features
-- Natural language interaction with the agent (CLI or WhatsApp)
+- Natural language interaction with the agent (CLI)
 - Executes blockchain operations (balance, send, deploy token, etc.)
 - Tool-call support: the agent can invoke blockchain tools as needed
 - OpenAI-compatible (works with any service supporting the OpenAI API)
@@ -16,10 +16,6 @@ A modular AI agent for the BlockDAG blockchain, capable of interacting via CLI, 
 
 ## Setup
 1. **Clone the repository:**
-   ```bash
-   git clone <repo-url>
-   cd <repo-folder>
-   ```
 2. **Install dependencies:**
    ```bash
    npm install
@@ -38,7 +34,7 @@ A modular AI agent for the BlockDAG blockchain, capable of interacting via CLI, 
 ### CLI Mode
 Run the agent in CLI mode:
 ```bash
-npx tsx src/index.ts
+bun run src\index.ts
 ```
 - Type your questions or requests in natural language.
 - The agent will respond, and if a blockchain operation is needed, it will execute the corresponding tool.
