@@ -8,7 +8,7 @@ import { assistantPrompt } from "../constants/prompt";
  * @param client The OpenAI client to use to create the assistant.
  * @returns The newly created assistant.
  */
-export async function createAssistant(client: OpenAI): Promise<Assistant> {
+export async function createAssistant(client: any): Promise<Assistant> {
   // Create the assistant with the specified model, name, instructions and tools.
   return await client.beta.assistants.create({
     // The model to use for the assistant.

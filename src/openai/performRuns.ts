@@ -10,7 +10,7 @@ import { handleRunToolCalls } from "./handleRunCalls.js";
  * @param thread The thread the run belongs to.
  * @returns The result of the run, or an error message if the run failed.
  */
-export async function performRun(run: Run, client: OpenAI, thread: Thread) {
+export async function performRun(run: Run, client: any, thread: Thread) {
   console.log(`🚀 Performing run ${run.id}`);
 
   // Keep performing the run until it's complete

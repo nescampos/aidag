@@ -13,7 +13,7 @@ import { tools } from "../../tools/allTools";
  */
 export async function handleRunToolCalls(
   run: Run,
-  client: OpenAI,
+  client: any,
   thread: Thread
 ): Promise<Run> {
   const toolCalls = run.required_action?.submit_tool_outputs?.tool_calls;

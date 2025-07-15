@@ -10,7 +10,7 @@ import type { Thread } from "openai/resources/beta/threads/threads";
  * @returns The created run.
  */
 export async function createRun(
-  client: OpenAI,
+  client: any,
   thread: Thread,
   assistantId: string
 ): Promise<Run> {

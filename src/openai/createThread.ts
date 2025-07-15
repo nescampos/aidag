@@ -7,8 +7,8 @@ import { Thread } from "openai/resources/beta/threads/threads";
  * @returns The newly created thread.
  */
 export async function createThread(
-  client: OpenAI,
-  message?: string
+  client: any,
+  message?: string | undefined
 ): Promise<Thread> {
   // Create a new thread
   const thread = await client.beta.threads.create();
