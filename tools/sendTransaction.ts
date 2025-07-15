@@ -3,7 +3,6 @@ import { parseEther, getContract } from "viem"; // Function to convert ETH to We
 import { createViemWalletClient } from "../src/viem/createViemWalletClient.js"; // Function to create a Viem wallet client
 import type { ToolConfig } from "./allTools.js"; // Type definition for tool configurations
 import type { SendTransactionArgs } from "../interface/index.js"; // Type definition for send transaction arguments
-import {tokensAvailable, abiByToken} from "../src/constants/tokens";
 
 // Configuration for the send transaction tool
 export const sendTransactionTool: ToolConfig<SendTransactionArgs> = {
@@ -84,14 +83,9 @@ export const sendTransactionTool: ToolConfig<SendTransactionArgs> = {
             pattern: "^0x[a-fA-F0-9]*$",
             description: "Paymaster input",
             optional: true,
-          },
-          token: {
-            type: "string",
-            description: "The contract Id of the token/coin to send",
-            optional: true,
-          },
+          }
         },
-        required: ["to"],
+        required: ["value","to"],
       },
     },
   },
@@ -113,16 +107,13 @@ async function sendTransaction({
   accessList,
   factoryDeps,
   paymaster,
-  paymasterInput,
-  token
+  paymasterInput
 }: SendTransactionArgs) {
   try {
     // Creating a Viem wallet client instance
     const walletClient = createViemWalletClient();
 
     // Sending the transaction with the provided parameters
-    //console.log("Token id: "+token);
-    if(token == undefined || token == '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
       const hash = await walletClient.sendTransaction({
         to,
         value: value ? parseEther(value) : undefined,
@@ -145,30 +136,6 @@ async function sendTransaction({
         hash,
         message: `Transaction sent successfully. Hash: ${hash}`,
       };
-    } else {
-      const tokenOrigin = tokensAvailable.find((t) => t.contractId === token);
-      if (!tokenOrigin) throw new Error(`Token ${token} not found in tokensAvailable`);
-      const amountWithDecimals = BigInt(Math.floor(Number(value) * 10 ** tokenOrigin.decimals));
-      const tokenToSend = abiByToken.find((t) => t.contractId === token);
-      if (!tokenToSend) throw new Error(`ABI for token ${token} not found`);
-      const { request } = await walletClient.simulateContract({
-        account: walletClient.account,
-        address: token,
-        abi: tokenToSend.ABI,
-        functionName: 'transfer',
-        args: [to, amountWithDecimals]
-      });
-      const tx = await walletClient.writeContract({
-        ...request,
-        address: to as `0x${string}`
-      });
-      return {
-        success: true,
-        tx,
-        message: `Transaction sent successfully. Hash: ${tx}`,
-      };
-    }
-    
   } catch (error) {
     // Handling errors and returning an error message
     //console.error(error);
