@@ -127,8 +127,6 @@ async function sendTransaction({
           paymasterInput: paymasterInput || undefined,
         },
       });
-
-      console.log(`Valor enviado ${value}`);
   
       // Returning the transaction hash and a success message
       return {
