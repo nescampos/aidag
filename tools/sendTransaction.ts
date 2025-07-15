@@ -15,15 +15,14 @@ export const sendTransactionTool: ToolConfig<SendTransactionArgs> = {
       parameters: {
         type: "object",
         properties: {
+          value: {
+            type: "string",
+            description: "The amount to send (in BDAG, as a decimal string)"
+          },
           to: {
             type: "string",
             pattern: "^0x[a-fA-F0-9]{40}$",
             description: "The recipient address",
-          },
-          value: {
-            type: "string",
-            description: "The amount to send",
-            optional: true,
           },
           data: {
             type: "string",
@@ -106,8 +105,8 @@ export const sendTransactionTool: ToolConfig<SendTransactionArgs> = {
 
 // Function to send a transaction
 async function sendTransaction({
-  to,
   value,
+  to,
   data,
   nonce,
   gasPrice,
@@ -137,6 +136,8 @@ async function sendTransaction({
           paymasterInput: paymasterInput || undefined,
         },
       });
+
+      console.log(`Valor enviado ${value}`);
   
       // Returning the transaction hash and a success message
       return {
@@ -146,16 +147,21 @@ async function sendTransaction({
       };
     } else {
       const tokenOrigin = tokensAvailable.find((t) => t.contractId === token);
-      const amountWithDecimals = Number(value) * 10** tokenOrigin.decimals;
+      if (!tokenOrigin) throw new Error(`Token ${token} not found in tokensAvailable`);
+      const amountWithDecimals = BigInt(Math.floor(Number(value) * 10 ** tokenOrigin.decimals));
       const tokenToSend = abiByToken.find((t) => t.contractId === token);
+      if (!tokenToSend) throw new Error(`ABI for token ${token} not found`);
       const { request } = await walletClient.simulateContract({
         account: walletClient.account,
         address: token,
-        abi: tokenToSend?.ABI,
+        abi: tokenToSend.ABI,
         functionName: 'transfer',
-        args: [to,amountWithDecimals ]
+        args: [to, amountWithDecimals]
       });
-      const tx = await walletClient.writeContract(request);
+      const tx = await walletClient.writeContract({
+        ...request,
+        address: to as `0x${string}`
+      });
       return {
         success: true,
         tx,

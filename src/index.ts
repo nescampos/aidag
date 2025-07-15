@@ -2,9 +2,8 @@ import "dotenv/config";
 import * as readline from "readline";
 import { createOpenAIClient } from "./openai/openaiClientFactory.js";
 import { tools } from "../tools/allTools.js";
-
-import type { Thread } from "openai/resources/beta/threads/threads";
-import type { Assistant } from "openai/resources/beta/assistants";
+import { assistantPrompt } from "./constants/prompt.js";
+import { ChatCompletionMessageParam } from "openai/resources/index.js";
 
 const client = createOpenAIClient();
 
@@ -20,63 +19,77 @@ const question = (query: string): Promise<string> => {
 };
 
 async function chatAgent(): Promise<void> {
+  const history: ChatCompletionMessageParam[] = [];
+  const model = process.env.OPENAI_MODEL || "gpt-4o";
+  const maxTokens = 512;
+  const modelTemperature = 0.2;
+
   while (true) {
     const userInput = await question("\nYou: ");
     if (userInput.toLowerCase() === "exit") {
       rl.close();
       break;
     }
-    // Detectar si la entrada es una tool (por nombre exacto al inicio)
-    const [toolName, ...argPairs] = userInput.trim().split(/\s+/);
-    const tool = tools[toolName];
-    if (tool) {
-      // Parseo simple: arg1=val1 arg2=val2
-      const args: Record<string, any> = {};
-      for (const pair of argPairs) {
+    history.push({ role: "user", content: userInput });
+    let messages: ChatCompletionMessageParam[] = [
+      { role: "system", content: assistantPrompt },
+      ...history,
+      { role: 'user', content: userInput }
+    ];
+    let response = await client.chat.completions.create({
+      model,
+      messages,
+      max_tokens: maxTokens,
+      temperature: modelTemperature
+    });
+    let content = response.choices[0].message?.content ?? "";
+    // Detectar tool-call: [TOOL_CALL] toolName(arg1=val1,arg2=val2)
+    const toolCallMatch = content.match(/^\[TOOL_CALL\]\s*(\w+)\((.*)\)$/);
+    if (toolCallMatch) {
+      const [, toolName, paramsRaw] = toolCallMatch;
+      const tool = tools[toolName];
+      if (!tool) {
+        console.log(`Tool ${toolName} not found`);
+        continue;
+      }
+      // Parsear argumentos: arg1=val1,arg2=val2
+      const params: Record<string, any> = {};
+      paramsRaw.split(",").forEach(pair => {
         const [k, v] = pair.split("=");
-        if (k && v !== undefined) args[k] = v;
-      }
+        if (k && v !== undefined) {
+          // Si el parámetro es value, forzar a string decimal
+          if (k.trim() === "value") {
+            params[k.trim()] = String(v.trim());
+          } else {
+            params[k.trim()] = v.trim();
+          }
+        }
+      });
       try {
-        const result = await tool.handler(args);
-        console.log("\nResult:", result);
+        const toolResult = await tool.handler(params);
+        history.push({ role: "assistant", content });
+        history.push({ role: "function", name: toolName, content: String(toolResult) });
+        // Nueva respuesta del modelo con el resultado de la tool
+        messages = [
+          { role: "system", content: assistantPrompt },
+          ...history
+        ];
+        response = await client.chat.completions.create({
+          model,
+          messages,
+          max_tokens: maxTokens,
+          temperature: modelTemperature
+        });
+        content = response.choices[0].message?.content ?? "";
       } catch (error) {
-        console.error("Error ejecutando tool:", error instanceof Error ? error.message : error);
+        content = `Error ejecutando tool: ${error instanceof Error ? error.message : error}`;
       }
-    } else {
-      // Respuesta genérica de agente (sin assistant)
-      console.log("Soy un agente blockchain. Puedes ejecutar las siguientes tools:", Object.keys(tools).join(", "));
     }
+    history.push({ role: "assistant", content });
+    console.log("\nAgent:", content);
   }
 }
 
-async function chatWithTools(): Promise<void> {
-  while (true) {
-    const userInput = await question("\nTool> ");
-    if (userInput.toLowerCase() === "exit") {
-      rl.close();
-      break;
-    }
-    // Espera: toolName arg1=val1 arg2=val2 ...
-    const [toolName, ...argPairs] = userInput.trim().split(/\s+/);
-    const tool = tools[toolName];
-    if (!tool) {
-      console.log("Tool no encontrada. Usa uno de:", Object.keys(tools).join(", "));
-      continue;
-    }
-    // Parseo simple: arg1=val1 arg2=val2
-    const args: Record<string, any> = {};
-    for (const pair of argPairs) {
-      const [k, v] = pair.split("=");
-      if (k && v !== undefined) args[k] = v;
-    }
-    try {
-      const result = await tool.handler(args);
-      console.log("\nResult:", result);
-    } catch (error) {
-      console.error("Error ejecutando tool:", error instanceof Error ? error.message : error);
-    }
-  }
-}
 
 async function main(): Promise<void> {
   try {
