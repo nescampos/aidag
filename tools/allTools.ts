@@ -2,23 +2,13 @@ import { getBalanceTool } from "./getBalance";
 import { getWalletAddressTool } from "./getWalletAddress";
 import { sendTransactionTool } from "./sendTransaction";
 import { deployErc20Tool } from "./deployERC20";
+import { ChatCompletionTool } from "openai/resources/index";
 
 export interface ToolConfig<T = any> {
   /**
    * The definition of the tool.
    */
-  definition: {
-    type: "function";
-    function: {
-      name: string;
-      description: string;
-      parameters: {
-        type: "object";
-        properties: Record<string, unknown>;
-        required: string[];
-      };
-    };
-  };
+  definition: ChatCompletionTool;
 
   /**
    * The handler function that will be called when the tool is executed.

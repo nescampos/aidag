@@ -21,7 +21,7 @@ export const getWalletAddressTool: ToolConfig<GetWalletAddressArgs> = {
       },
     },
   },
-  handler: async () => {
+  handler: async (args: GetWalletAddressArgs) => {
     return await getWalletAddress();
   },
 };

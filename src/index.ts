@@ -3,7 +3,7 @@ import * as readline from "readline";
 import { createOpenAIClient } from "./openai/openaiClientFactory.js";
 import { tools } from "../tools/allTools.js";
 import { assistantPrompt } from "./constants/prompt.js";
-import { ChatCompletionMessageParam } from "openai/resources/index.js";
+import { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/index.js";
 
 const client = createOpenAIClient();
 
@@ -24,6 +24,12 @@ async function chatAgent(): Promise<void> {
   const maxTokens = 512;
   const modelTemperature = 0.2;
 
+  // Convertir herramientas a formato compatible con OpenAI
+  const openaiTools: ChatCompletionTool[] = Object.values(tools).map(tool => ({
+    type: "function",
+    function: tool.definition.function
+  }));
+
   while (true) {
     const userInput = await question("\nYou: ");
     if (userInput.toLowerCase() === "exit") {
@@ -36,57 +42,80 @@ async function chatAgent(): Promise<void> {
       ...history,
       { role: 'user', content: userInput }
     ];
+    
     let response = await client.chat.completions.create({
       model,
       messages,
+      tools: openaiTools,
       max_tokens: maxTokens,
       temperature: modelTemperature
     });
-    let content = response.choices[0].message?.content ?? "";
-    // Detectar tool-call: [TOOL_CALL] toolName(arg1=val1,arg2=val2)
-    const toolCallMatch = content.match(/^\[TOOL_CALL\]\s*(\w+)\((.*)\)$/);
-    if (toolCallMatch) {
-      const [, toolName, paramsRaw] = toolCallMatch;
-      const tool = tools[toolName];
-      if (!tool) {
-        console.log(`Tool ${toolName} not found`);
-        continue;
-      }
-      // Parsear argumentos: arg1=val1,arg2=val2
-      const params: Record<string, any> = {};
-      paramsRaw.split(",").forEach(pair => {
-        const [k, v] = pair.split("=");
-        if (k && v !== undefined) {
-          // Si el parámetro es value, forzar a string decimal
-          if (k.trim() === "value") {
-            params[k.trim()] = String(v.trim());
-          } else {
-            params[k.trim()] = v.trim();
-          }
+    
+    const responseMessage = response.choices[0].message;
+    
+    // Verificar si hay llamadas a herramientas
+    if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
+      // Agregar el mensaje del asistente con las herramientas llamadas al historial
+      history.push(responseMessage);
+      
+      // Procesar cada llamada a herramienta
+      for (const toolCall of responseMessage.tool_calls) {
+        const functionName = toolCall.function.name;
+        const tool = tools[functionName];
+        
+        if (!tool) {
+          console.log(`Tool ${functionName} not found`);
+          continue;
         }
-      });
-      try {
-        const toolResult = await tool.handler(params);
-        history.push({ role: "assistant", content });
-        history.push({ role: "function", name: toolName, content: String(toolResult) });
-        // Nueva respuesta del modelo con el resultado de la tool
-        messages = [
+        
+        try {
+          // Parsear los argumentos desde JSON
+          const args = JSON.parse(toolCall.function.arguments || '{}');
+          
+          // Asegurar que value sea string si está presente
+          if (args.value !== undefined) {
+            args.value = String(args.value);
+          }
+          
+          const toolResult = await tool.handler(args);
+          
+          // Agregar el resultado de la herramienta al historial
+          history.push({
+            role: "tool",
+            content: String(toolResult),
+            tool_call_id: toolCall.id
+          });
+        } catch (error) {
+          console.error(`Error executing tool ${functionName}:`, error);
+          // Agregar un mensaje de error al historial
+          history.push({
+            role: "tool",
+            content: `Error executing tool: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            tool_call_id: toolCall.id
+          });
+        }
+      }
+      
+      // Obtener una nueva respuesta del modelo usando los resultados de las herramientas
+      const secondResponse = await client.chat.completions.create({
+        model,
+        messages: [
           { role: "system", content: assistantPrompt },
           ...history
-        ];
-        response = await client.chat.completions.create({
-          model,
-          messages,
-          max_tokens: maxTokens,
-          temperature: modelTemperature
-        });
-        content = response.choices[0].message?.content ?? "";
-      } catch (error) {
-        content = `Error executing tool: ${error instanceof Error ? error.message : error}`;
-      }
+        ],
+        max_tokens: maxTokens,
+        temperature: modelTemperature
+      });
+      
+      const secondResponseContent = secondResponse.choices[0].message?.content ?? "";
+      history.push({ role: "assistant", content: secondResponseContent });
+      console.log("\nAgent:", secondResponseContent);
+    } else {
+      // Si no hay llamadas a herramientas, simplemente mostrar la respuesta
+      const content = responseMessage.content ?? "";
+      history.push({ role: "assistant", content });
+      console.log("\nAgent:", content);
     }
-    history.push({ role: "assistant", content });
-    console.log("\nAgent:", content);
   }
 }
 

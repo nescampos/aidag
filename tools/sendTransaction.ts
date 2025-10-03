@@ -90,7 +90,7 @@ export const sendTransactionTool: ToolConfig<SendTransactionArgs> = {
     },
   },
   // Handler function to execute the send transaction tool
-  handler: async (args) => {
+  handler: async (args: SendTransactionArgs) => {
     const result = await sendTransaction(args);
     if (!result.success || !result.hash) throw new Error(result.message);
     return result.hash;

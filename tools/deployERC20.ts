@@ -6,7 +6,11 @@ import { createViemPublicClient } from "../src/viem/createViemPublicClient.js";
 /**
  * Configuration for the deploy_erc20 tool.
  */
-export const deployErc20Tool: ToolConfig = {
+export const deployErc20Tool: ToolConfig<{
+  name: string;
+  symbol: string;
+  initialSupply?: string;
+}> = {
   /**
    * The definition of the tool.
    */

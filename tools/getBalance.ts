@@ -30,7 +30,7 @@ export const getBalanceTool: ToolConfig<GetBalanceArgs> = {
       },
     },
   },
-  handler: async ({ wallet }) => {
+  handler: async ({ wallet }: GetBalanceArgs) => {
     return await getBalance(wallet);
   },
 };
