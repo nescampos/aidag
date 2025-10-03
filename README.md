@@ -42,15 +42,7 @@ bun run src\index.ts
 
 
 ## Tool-Call Format
-When the agent needs to execute a blockchain operation, it uses a tool-call format:
-```
-[TOOL_CALL] toolName(arg1=val1,arg2=val2)
-```
-Example:
-```
-[TOOL_CALL] get_balance(wallet=0x123...)
-```
-The agent will execute the tool, add the result to the conversation, and continue the dialogue.
+When the agent needs to execute a blockchain operation, it uses a tool-call format.
 
 ## Available Tools
 - `get_balance`: Get the balance of a wallet
