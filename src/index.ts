@@ -122,7 +122,7 @@ async function chatAgent(): Promise<void> {
 
 async function main(): Promise<void> {
   try {
-    console.log('Agent ready. Type a tool name or "exit" to exit.');
+    console.log('Agent ready. Write your query/action or "exit" to exit.');
     await chatAgent();
   } catch (error) {
     console.error(
