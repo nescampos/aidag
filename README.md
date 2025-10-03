@@ -66,4 +66,31 @@ When the agent needs to execute a blockchain operation, it uses a tool-call form
 - Issues and suggestions are welcome!
 
 ## License
-MIT 
+MIT
+
+## Future Roadmap and Improvements
+
+### Planned Features
+- **Advanced DeFi Operations**: Integration with decentralized exchanges for swapping tokens, providing liquidity, and yield farming
+- **NFT Support**: Tools for minting, transferring, and managing NFTs on the BlockDAG network
+- **Multi-wallet Management**: Support for managing multiple wallets and signing keys
+- **Transaction Batching**: Ability to batch multiple operations into a single transaction
+- **Smart Contract Interaction**: Generic tools to interact with any deployed smart contract
+- **On-chain Data Queries**: More comprehensive data retrieval tools for blockchain state
+- **Improved Token Handling**: Better support for various token standards and custom tokens
+- **Gas Optimization**: Advanced gas estimation and optimization features
+
+### Platform Improvements
+- **GUI Interface**: Development of a web-based interface alongside the CLI
+- **Mobile App**: Native mobile application for on-the-go blockchain operations
+- **Enhanced Security**: Multi-signature support and hardware wallet integration
+- **Transaction Scheduling**: Ability to schedule transactions for future execution
+- **Better Error Handling**: More intuitive error messages and recovery mechanisms
+- **Performance Optimization**: Reduced latency in AI response and transaction execution
+- **Advanced Analytics**: Transaction history and portfolio tracking features
+
+### AI Capabilities
+- **Natural Language Understanding**: Improved parsing of complex user requests
+- **Context Awareness**: Better retention of conversation context across sessions
+- **Predictive Operations**: Suggestions for optimal transaction strategies based on market conditions
+- **Educational Mode**: Explanations of blockchain concepts for new users 
